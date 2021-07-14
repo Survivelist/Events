@@ -29,9 +29,13 @@ import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.NotPresentPlayerException;
+import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,54 +52,52 @@ import java.util.function.Predicate;
 public class SurvivelistServerEvent implements ServerEvent {
     private final JavaPlugin javaPlugin = JavaPlugin.getProvidingPlugin(getClass());
     private final UUID uuid = UUID.randomUUID();
-    private final Map<EventPlayer, @NotNull Location> players = new ConcurrentHashMap<>();
+    private final Map<UUID, EventPlayer> players = new ConcurrentHashMap<>();
+    private final EventsListener eventsListener = new EventsListener();
     private Location eventLocation;
 
     @Override
     public @NotNull EventPlayer addPlayer(Player player) throws AlreadyPresentPlayerException, InventoryNotClearPlayerException {
         // Check for the player in the map
-        for (EventPlayer eventPlayer : players.keySet()) {
-            if (eventPlayer.getPlayer() == player) {
-                throw new AlreadyPresentPlayerException(player, this, SurvivelistEvents.Messages.JOIN_ALREADY_IN.toString());
-            }
+        final UUID uid = player.getUniqueId();
+        if (players.containsKey(uid)) {
+            throw new AlreadyPresentPlayerException(player, this, SurvivelistEvents.Messages.JOIN_ALREADY_IN.toString());
         }
         // Check if their inventory is empty
         if (!player.getInventory().isEmpty()) {
             throw new InventoryNotClearPlayerException(player, SurvivelistEvents.Messages.PLEASE_EMPTY_INVENTORY.toString());
         }
         // Save their location
-        final @NotNull Location originalLocation = player.getLocation();
+        final @NotNull Location originalLocation = player.getLocation().clone();
         final EventPlayer eventPlayer = new EventPlayer(this, player) {
             @Override
             public void teleportBack() {
-                player.teleportAsync(players.get(this));
+                player.teleportAsync(originalLocation);
             }
         };
         // Store in map
-        players.put(eventPlayer, originalLocation);
+        players.put(uid, eventPlayer);
         return eventPlayer;
     }
 
     @Override
     public void removePlayer(Player player) throws NotPresentPlayerException {
-        boolean removed = false;
         // Search for player in map
-        for (EventPlayer eventPlayer : players.keySet()) {
-            if (eventPlayer.getPlayer() == player) {
-                // Teleport back to original location
-                eventPlayer.teleportBack();
-                // Remove from map
-                players.remove(eventPlayer);
-                removed = true;
-                break;
-            }
+        final UUID uid = player.getUniqueId();
+        final EventPlayer eventPlayer = players.get(uid);
+        if (eventPlayer != null) {
+            // Teleport back to original location
+            eventPlayer.teleportBack();
+            // Remove from map
+            players.remove(uid);
+            return;
         }
-        if (!removed) throw new NotPresentPlayerException(player, SurvivelistEvents.Messages.LEAVE_NOT_IN.toString());
+        throw new NotPresentPlayerException(player, SurvivelistEvents.Messages.LEAVE_NOT_IN.toString());
     }
 
     @Override
     public void sendMessage(String message, Predicate<Player> predicate) {
-        Bukkit.getScheduler().runTaskAsynchronously(javaPlugin, () -> players.keySet().stream()
+        Bukkit.getScheduler().runTaskAsynchronously(javaPlugin, () -> players.values().stream()
                 .map(EventPlayer::getPlayer)
                 .filter(predicate)
                 .forEach(p -> p.sendMessage(message))
@@ -104,7 +106,7 @@ public class SurvivelistServerEvent implements ServerEvent {
 
     @Override
     public @NotNull Set<EventPlayer> getPlayers() {
-        return players.keySet();
+        return ImmutableSet.copyOf(players.values());
     }
 
     @Override
@@ -128,5 +130,20 @@ public class SurvivelistServerEvent implements ServerEvent {
     @Override
     public int hashCode() {
         return uuid.hashCode();
+    }
+
+    private class EventsListener implements Listener {
+        private EventsListener() {
+            Bukkit.getPluginManager().registerEvents(this, javaPlugin);
+        }
+
+        @EventHandler
+        public void onPlayerRespawnEvent(PlayerRespawnEvent e) {
+            // Ignore players that haven't joined the event
+            if (!players.containsKey(e.getPlayer().getUniqueId())) {
+                return;
+            }
+            getEventLocation().ifPresent(e::setRespawnLocation);
+        }
     }
 }
