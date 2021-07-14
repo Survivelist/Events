@@ -1,0 +1,2 @@
+## SurvivelistEvents
+Host server events
