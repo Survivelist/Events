@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Interface of the current server event.
@@ -54,6 +55,23 @@ public interface ServerEvent {
      * @throws NotPresentPlayerException if the player is not in the event
      */
     void removePlayer(Player player) throws NotPresentPlayerException;
+
+    /**
+     * Send a message to all players in the event.
+     *
+     * @param message message to send
+     */
+    default void sendMessage(String message) {
+        sendMessage(message, p -> true);
+    }
+
+    /**
+     * Send a message to all players that match the provided predicate.
+     *
+     * @param message message to send
+     * @param predicate predicate to test
+     */
+    void sendMessage(String message, Predicate<Player> predicate);
 
     /**
      * Get all players in the event.

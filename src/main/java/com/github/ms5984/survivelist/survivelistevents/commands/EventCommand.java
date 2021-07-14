@@ -26,6 +26,7 @@ package com.github.ms5984.survivelist.survivelistevents.commands;
 import com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents;
 import com.github.ms5984.survivelist.survivelistevents.api.EventService;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
+import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.NotPresentPlayerException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -107,10 +108,13 @@ public class EventCommand implements TabExecutor {
             // Join event
             try {
                 eventService.getEvent().addPlayer(player).teleportToEvent();
-            } catch (AlreadyPresentPlayerException e) {
-                // Send message "you are already in the event"
+            } catch (AlreadyPresentPlayerException | InventoryNotClearPlayerException e) {
+                // Send message "you are already in the event" or "please empty your inventory"
                 sender.sendMessage(e.getMessage());
+                return true;
             }
+            player.sendMessage(SurvivelistEvents.Messages.JOIN_MESSAGE_SELF.toString());
+            eventService.getEvent().sendMessage(SurvivelistEvents.Messages.JOIN_ANNOUNCE_.replace(player.getName()), p -> p != player);
         } else if (args[0].equalsIgnoreCase("leave")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_LEAVE.getNode()).map(sender::hasPermission).orElse(false)) {
@@ -123,7 +127,10 @@ public class EventCommand implements TabExecutor {
             } catch (NotPresentPlayerException e) {
                 // Send message "you are not in the event"
                 sender.sendMessage(e.getMessage());
+                return true;
             }
+            player.sendMessage(SurvivelistEvents.Messages.LEAVE_MESSAGE_SELF.toString());
+            eventService.getEvent().sendMessage(SurvivelistEvents.Messages.LEAVE_ANNOUNCE_.replace(player.getName()), p -> p != player);
         }
         return true;
     }

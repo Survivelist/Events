@@ -29,8 +29,10 @@ import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.NotPresentPlayerException;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -38,11 +40,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /**
  * Plugin implementation of ServerEvent.
  */
 public class SurvivelistServerEvent implements ServerEvent {
+    private final JavaPlugin javaPlugin = JavaPlugin.getProvidingPlugin(getClass());
     private final UUID uuid = UUID.randomUUID();
     private final Map<EventPlayer, @NotNull Location> players = new ConcurrentHashMap<>();
     private Location eventLocation;
@@ -87,6 +91,15 @@ public class SurvivelistServerEvent implements ServerEvent {
             }
         }
         if (!removed) throw new NotPresentPlayerException(player, SurvivelistEvents.Messages.LEAVE_NOT_IN.toString());
+    }
+
+    @Override
+    public void sendMessage(String message, Predicate<Player> predicate) {
+        Bukkit.getScheduler().runTaskAsynchronously(javaPlugin, () -> players.keySet().stream()
+                .map(EventPlayer::getPlayer)
+                .filter(predicate)
+                .forEach(p -> p.sendMessage(message))
+        );
     }
 
     @Override
