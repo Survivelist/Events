@@ -1,0 +1,24 @@
+subcommand-info:
+  event:
+    sethere:
+      description: "Set the place of the event"
+      permission: events.sethere
+    join:
+      description: "Join the event! Please clear your inventory"
+      permission: events.join
+    leave:
+      description: "Leave the event. You will be returned to your last location"
+      permission: events.leave
+messages:
+  no-permission: "&cYou do not have permission to perform this command."
+  player: "You must be a player to perform this action."
+  location-set: "&#DDD605Updated event location: &b{0}" # {0} = location
+  empty-inventory: "&cPlease empty your inventory before joining the event."
+  joining:
+    self: "&7&oYou &7have joined the event"
+    announce: "&6&l{0} &6has joined the event" # {0} = player name
+    already-in: "&cYou are already in the event!"
+  leaving:
+    self: "&bLeaving the event. You have been returned to your previous location."
+    announce: "&6&l{0} &6has left the event" # {0} = player name
+    not-in: "&cYou are not in the event!"

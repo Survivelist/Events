@@ -1,0 +1,20 @@
+name: SurvivelistEvents
+version: ${project.version}
+main: com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents
+api-version: 1.17
+authors: [ ms5984, ItzShmulik ]
+description: ${project.description}
+commands:
+  event:
+    permission: events.command.event
+  eventtp:
+    usage: "Usage: /<command>"
+    description: Teleport all players that did /event join back to the event place
+    permission: events.command.eventtp
+permissions:
+  event.command.event:
+    description: Access /event command
+    default: true
+  event.command.eventtp:
+    description: Access /eventtp command
+    # Default OP only
