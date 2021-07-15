@@ -28,6 +28,7 @@ import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventCommand;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventTpCommand;
 import com.github.ms5984.survivelist.survivelistevents.model.SurvivelistServerEvent;
+import com.github.ms5984.survivelist.survivelistevents.util.DataService;
 import com.github.ms5984.survivelist.survivelistevents.util.TextLibrary;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -46,6 +47,7 @@ import java.util.function.Supplier;
 public final class SurvivelistEvents extends JavaPlugin implements EventService {
     private static SurvivelistEvents instance;
     private final SurvivelistServerEvent event = new SurvivelistServerEvent();
+    private final DataService dataService = new DataService();
     private PluginCommand eventCmd;
     private PluginCommand eventTpCmd;
 
@@ -73,6 +75,10 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     @Override
     public @NotNull ServerEvent getEvent() {
         return event;
+    }
+
+    public static DataService getDataService() {
+        return instance.dataService;
     }
 
     public enum Permissions {
