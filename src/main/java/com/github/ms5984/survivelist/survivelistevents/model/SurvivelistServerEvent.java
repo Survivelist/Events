@@ -29,6 +29,7 @@ import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.NotPresentPlayerException;
+import com.github.ms5984.survivelist.survivelistevents.util.DataFile;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -54,7 +55,8 @@ public class SurvivelistServerEvent implements ServerEvent {
     private final UUID uuid = UUID.randomUUID();
     private final Map<UUID, EventPlayer> players = new ConcurrentHashMap<>();
     private final EventsListener eventsListener = new EventsListener();
-    private Location eventLocation;
+    private final DataFile dataFile = new DataFile("event-data.yml");
+    private Location eventLocation = dataFile.getValueNow(fc -> fc.getLocation("location"));
 
     @Override
     public @NotNull EventPlayer addPlayer(Player player) throws AlreadyPresentPlayerException, InventoryNotClearPlayerException {
@@ -117,6 +119,7 @@ public class SurvivelistServerEvent implements ServerEvent {
     @Override
     public void setEventLocation(Location location) {
         eventLocation = (location == null) ? null : location.clone();
+        dataFile.update(fc -> fc.set("location", eventLocation)).whenComplete((n, e) -> dataFile.save());
     }
 
     @Override
