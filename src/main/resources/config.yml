@@ -1,14 +1,21 @@
 subcommand-info:
   event:
-    sethere:
-      description: "Set the place of the event"
-      permission: events.sethere
     join:
       description: "Join the event! Please clear your inventory"
       permission: events.join
     leave:
       description: "Leave the event. You will be returned to your last location"
       permission: events.leave
+    # All permissions below are inherited by 'events.manage.*'
+    sethere:
+      description: "Set the place of the event"
+      permission: events.manage.sethere
+    start:
+      description: "Start the event"
+      permission: events.manage.start
+    end:
+      description: "End the event"
+      permission: events.manage.end
 messages:
   no-permission: "&cYou do not have permission to perform this command."
   player: "You must be a player to perform this action."

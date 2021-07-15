@@ -58,6 +58,7 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         instance = this;
         TextLibrary.setup(this);
         Permissions.registerSubDefaults();
+        Permissions.setupManageStarNode();
         this.event = new SurvivelistServerEvent(this);
         this.eventCmd = instance.getCommand("event");
         this.eventTpCmd = instance.getCommand("eventtp");
@@ -87,9 +88,11 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     public enum Permissions {
         EVENT_COMMAND(() -> Optional.ofNullable(instance.eventCmd).map(PluginCommand::getPermission).orElse(null)),
         EVENTTP_COMMAND(() -> Optional.ofNullable(instance.eventTpCmd).map(PluginCommand::getPermission).orElse(null)),
-        EVENT_SETHERE(() -> instance.getConfig().getString("subcommand-info.event.sethere.permission")),
         EVENT_JOIN(() -> instance.getConfig().getString("subcommand-info.event.join.permission")),
         EVENT_LEAVE(() -> instance.getConfig().getString("subcommand-info.event.leave.permission")),
+        EVENT_SETHERE(() -> instance.getConfig().getString("subcommand-info.event.sethere.permission")),
+        EVENT_START(() -> instance.getConfig().getString("subcommand-info.event.start.permission")),
+        EVENT_END(() -> instance.getConfig().getString("subcommand-info.event.end.permission")),
         ;
         private final Supplier<String> supplier;
 
@@ -109,6 +112,29 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
                 final Permission leavePerm = new Permission(eventLeaveNode);
                 leavePerm.setDefault(PermissionDefault.TRUE);
                 Bukkit.getPluginManager().addPermission(leavePerm);
+            }
+        }
+
+        private static void setupManageStarNode() {
+            final Permission manageStar = Bukkit.getPluginManager().getPermission("events.manage.*");
+            if (manageStar == null) throw new IllegalStateException();
+            final String setHereNode = EVENT_SETHERE.getNode();
+            if (setHereNode != null) {
+                final Permission setHerePerm = new Permission(setHereNode);
+                setHerePerm.addParent(manageStar, true);
+                Bukkit.getPluginManager().addPermission(setHerePerm);
+            }
+            final String startNode = EVENT_START.getNode();
+            if (startNode != null) {
+                final Permission startPerm = new Permission(startNode);
+                startPerm.addParent(manageStar, true);
+                Bukkit.getPluginManager().addPermission(startPerm);
+            }
+            final String endNode = EVENT_END.getNode();
+            if (endNode != null) {
+                final Permission endPerm = new Permission(endNode);
+                endPerm.addParent(manageStar, true);
+                Bukkit.getPluginManager().addPermission(endPerm);
             }
         }
 

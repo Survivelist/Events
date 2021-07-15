@@ -12,9 +12,12 @@ commands:
     description: Teleport all players that did /event join back to the event place
     permission: events.command.eventtp
 permissions:
-  event.command.event:
+  events.command.event:
     description: Access /event command
     default: true
-  event.command.eventtp:
+  events.command.eventtp:
     description: Access /eventtp command
+    # Default OP only
+  events.manage.*:
+    description: Manage all event properties (sethere, start, stop)
     # Default OP only

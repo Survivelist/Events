@@ -73,10 +73,15 @@ public class EventCommand implements TabExecutor {
             // Show help menu
             sender.sendMessage("Commands:");
             for (Map.Entry<String, String> entry : helpMenu.entrySet()) {
-                if (entry.getKey().equals("sethere") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
+                final String key = entry.getKey();
+                if (key.equals("sethere") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
+                    continue;
+                } else if (entry.getKey().equals("start") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_START.getNode()).map(sender::hasPermission).orElse(false)) {
+                    continue;
+                } else if (entry.getKey().equals("end") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_END.getNode()).map(sender::hasPermission).orElse(false)) {
                     continue;
                 }
-                sender.sendMessage("/event " + entry.getKey() + " - " + entry.getValue());
+                sender.sendMessage("/event " + key + " - " + entry.getValue());
             }
             return true;
         }
@@ -89,17 +94,7 @@ public class EventCommand implements TabExecutor {
         }
         // is player; cast and store
         final Player player = (Player) sender;
-        if (args[0].equalsIgnoreCase("sethere")) {
-            // Test permission
-            if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
-                sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
-                return true;
-            }
-            // Set event location
-            final Location location = player.getLocation();
-            eventService.getEvent().setEventLocation(location);
-            player.sendMessage(SurvivelistEvents.Messages.LOCATION_SET_.replace(location));
-        } else if (args[0].equalsIgnoreCase("join")) {
+        if (args[0].equalsIgnoreCase("join")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_JOIN.getNode()).map(sender::hasPermission).orElse(false)) {
                 sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
@@ -131,6 +126,30 @@ public class EventCommand implements TabExecutor {
             }
             player.sendMessage(SurvivelistEvents.Messages.LEAVE_MESSAGE_SELF.toString());
             eventService.getEvent().sendMessage(SurvivelistEvents.Messages.LEAVE_ANNOUNCE_.replace(player.getName()), p -> p != player);
+        } else if (args[0].equalsIgnoreCase("sethere")) {
+            // Test permission
+            if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
+                sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
+                return true;
+            }
+            // Set event location
+            final Location location = player.getLocation();
+            eventService.getEvent().setEventLocation(location);
+            player.sendMessage(SurvivelistEvents.Messages.LOCATION_SET_.replace(location));
+        } else if (args[0].equalsIgnoreCase("start")) {
+            // Test permission
+            if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_START.getNode()).map(sender::hasPermission).orElse(false)) {
+                sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
+                return true;
+            }
+            // Start event
+        } else if (args[0].equalsIgnoreCase("end")) {
+            // Test permission
+            if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_END.getNode()).map(sender::hasPermission).orElse(false)) {
+                sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
+                return true;
+            }
+            // End event
         }
         return true;
     }
