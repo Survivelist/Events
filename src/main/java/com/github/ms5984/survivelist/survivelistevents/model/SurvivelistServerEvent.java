@@ -51,12 +51,27 @@ import java.util.function.Predicate;
  * Plugin implementation of ServerEvent.
  */
 public class SurvivelistServerEvent implements ServerEvent {
-    private final JavaPlugin javaPlugin = JavaPlugin.getProvidingPlugin(getClass());
+    private final JavaPlugin javaPlugin;
     private final UUID uuid = UUID.randomUUID();
     private final Map<UUID, EventPlayer> players = new ConcurrentHashMap<>();
-    private final EventsListener eventsListener = new EventsListener();
     private final DataFile dataFile = new DataFile("event-data.yml");
     private Location eventLocation = dataFile.getValueNow(fc -> fc.getLocation("location"));
+
+    public SurvivelistServerEvent(SurvivelistEvents survivelistEvents) {
+        // Set plugin instance
+        this.javaPlugin = survivelistEvents;
+        // Register Listener for player respawn event
+        Bukkit.getPluginManager().registerEvents(new Listener() {
+            @EventHandler
+            public void onPlayerRespawnEvent(PlayerRespawnEvent e) {
+                // Ignore players that haven't joined the event
+                if (!players.containsKey(e.getPlayer().getUniqueId())) {
+                    return;
+                }
+                getEventLocation().ifPresent(e::setRespawnLocation);
+            }
+        }, javaPlugin);
+    }
 
     @Override
     public @NotNull EventPlayer addPlayer(Player player) throws AlreadyPresentPlayerException, InventoryNotClearPlayerException {
@@ -133,20 +148,5 @@ public class SurvivelistServerEvent implements ServerEvent {
     @Override
     public int hashCode() {
         return uuid.hashCode();
-    }
-
-    private class EventsListener implements Listener {
-        private EventsListener() {
-            Bukkit.getPluginManager().registerEvents(this, javaPlugin);
-        }
-
-        @EventHandler
-        public void onPlayerRespawnEvent(PlayerRespawnEvent e) {
-            // Ignore players that haven't joined the event
-            if (!players.containsKey(e.getPlayer().getUniqueId())) {
-                return;
-            }
-            getEventLocation().ifPresent(e::setRespawnLocation);
-        }
     }
 }

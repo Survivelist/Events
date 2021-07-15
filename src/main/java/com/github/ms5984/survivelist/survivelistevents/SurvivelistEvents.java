@@ -46,7 +46,7 @@ import java.util.function.Supplier;
  */
 public final class SurvivelistEvents extends JavaPlugin implements EventService {
     private static SurvivelistEvents instance;
-    private final SurvivelistServerEvent event = new SurvivelistServerEvent();
+    private SurvivelistServerEvent event;
     private final DataService dataService = new DataService();
     private PluginCommand eventCmd;
     private PluginCommand eventTpCmd;
@@ -57,6 +57,7 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         instance = this;
         TextLibrary.setup(this);
         Permissions.registerSubDefaults();
+        this.event = new SurvivelistServerEvent(this);
         this.eventCmd = instance.getCommand("event");
         this.eventTpCmd = instance.getCommand("eventtp");
         final EventCommand eventCommand = new EventCommand(this);
