@@ -55,6 +55,7 @@ public class SurvivelistServerEvent implements ServerEvent {
     private final UUID uuid = UUID.randomUUID();
     private final Map<UUID, EventPlayer> players = new ConcurrentHashMap<>();
     private final DataFile dataFile = new DataFile("event-data.yml");
+    private final PlayerDataService playerDataService = new PlayerDataService();
     private Location eventLocation = dataFile.getValueNow(fc -> fc.getLocation("location"));
 
     public SurvivelistServerEvent(SurvivelistEvents survivelistEvents) {
@@ -85,11 +86,11 @@ public class SurvivelistServerEvent implements ServerEvent {
             throw new InventoryNotClearPlayerException(player, SurvivelistEvents.Messages.PLEASE_EMPTY_INVENTORY.toString());
         }
         // Save their location
-        final @NotNull Location originalLocation = player.getLocation().clone();
+        playerDataService.setOriginalLocation(player);
         final EventPlayer eventPlayer = new EventPlayer(this, player) {
             @Override
             public void teleportBack() {
-                player.teleportAsync(originalLocation);
+                player.teleportAsync(playerDataService.getOriginalLocation(player));
             }
         };
         // Store in map

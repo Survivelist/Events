@@ -27,6 +27,7 @@ import com.github.ms5984.survivelist.survivelistevents.api.EventService;
 import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventCommand;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventTpCommand;
+import com.github.ms5984.survivelist.survivelistevents.model.PlayerDataService;
 import com.github.ms5984.survivelist.survivelistevents.model.SurvivelistServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.util.DataService;
 import com.github.ms5984.survivelist.survivelistevents.util.TextLibrary;
@@ -71,6 +72,7 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        PlayerDataService.clearCache(this);
     }
 
     @Override
