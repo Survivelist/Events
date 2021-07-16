@@ -56,7 +56,9 @@ public class PlayerDataService {
      * Always called onDisable.
      */
     public static void clearCache(JavaPlugin javaPlugin) {
-        for (File userFile : new File(javaPlugin.getDataFolder(), "users").listFiles()) {
+        final File usersFolder = new File(javaPlugin.getDataFolder(), "users");
+        if (!usersFolder.isDirectory()) return;
+        for (File userFile : usersFolder.listFiles()) {
             if (userFile.isFile()) {
                 //noinspection ResultOfMethodCallIgnored
                 userFile.delete();

@@ -86,7 +86,8 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     @Override
     public @NotNull ServerEvent startEvent() throws EventAlreadyRunningException {
         if (event != null) throw new EventAlreadyRunningException(event, Messages.EVENT_RUNNING.toString());
-        return new SurvivelistServerEvent(this);
+        this.event = new SurvivelistServerEvent(this);
+        return event;
     }
 
     @Override
