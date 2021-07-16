@@ -190,8 +190,9 @@ public class EventCommand implements TabExecutor {
                 return true;
             }
             // Start event
+            final ServerEvent newEvent;
             try {
-                eventService.startEvent();
+                newEvent = eventService.startEvent();
             } catch (EventAlreadyRunningException e) {
                 // Send message "An event is in progress!"
                 sender.sendMessage(TextLibrary.translate("&c&o" + e.getMessage()));
@@ -214,7 +215,9 @@ public class EventCommand implements TabExecutor {
                     playerOptional.ifPresentOrElse(p -> p.sendMessage(forceStartMessage),
                             () -> sender.sendMessage(SurvivelistEvents.Messages.FORCE_START.toString()));
                 }
+                return true;
             }
+            sender.sendMessage(SurvivelistEvents.Messages.STARTED_.replace(newEvent));
         } else if (args[0].equalsIgnoreCase("end")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_END.getNode()).map(sender::hasPermission).orElse(false)) {

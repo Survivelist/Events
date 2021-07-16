@@ -36,3 +36,4 @@ messages:
   event-tp: "Teleporting all players..."
   replaced: "Event replaced. New instance {0}" # {0} = toString of ServerEvent
   ended: "Event ended."
+  started: "Event started. New instance {0}" # {0) = toString of new ServerEvent

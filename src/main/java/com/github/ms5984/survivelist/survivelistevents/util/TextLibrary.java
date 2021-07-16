@@ -23,9 +23,7 @@
  */
 package com.github.ms5984.survivelist.survivelistevents.util;
 
-import com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents;
 import net.md_5.bungee.api.ChatColor;
-import org.bukkit.Bukkit;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,17 +32,15 @@ import java.util.regex.Pattern;
  * Process color coded text into proper formatted text.
  */
 public final class TextLibrary {
-    private static TextLibrary instance;
     private static final Pattern HEX_PATTERN = Pattern.compile("&(#(\\d|[A-F]|[a-f]){6})");
-    private final boolean hasHexSupport;
 
-    private TextLibrary(boolean hasHexSupport) {
-        this.hasHexSupport = hasHexSupport;
+    // utility class
+    private TextLibrary() {
     }
 
     public static String translate(String text) {
         if (text == null) return "null";
-        if (hasHexSupport() && HEX_PATTERN.matcher(text).find()) {
+        if (HEX_PATTERN.matcher(text).find()) {
             final Matcher matcher = HEX_PATTERN.matcher(text);
             final StringBuffer sb = new StringBuffer();
             while (matcher.find()) {
@@ -54,17 +50,5 @@ public final class TextLibrary {
             text = sb.toString();
         }
         return ChatColor.translateAlternateColorCodes('&', text);
-    }
-
-    // Checks if version 1.16 or higher
-    public static boolean hasHexSupport() {
-        return instance != null ? instance.hasHexSupport : Bukkit.getVersion().matches("1\\.(1[6-9]|[2-9][0-9]).*");
-    }
-
-    public static void setup(SurvivelistEvents plugin) {
-        instance = new TextLibrary(hasHexSupport());
-        if (instance.hasHexSupport) {
-            plugin.getLogger().info("Loaded 1.16 and up hex support!");
-        }
     }
 }

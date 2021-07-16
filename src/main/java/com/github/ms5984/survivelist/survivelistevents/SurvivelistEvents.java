@@ -61,7 +61,6 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     public void onEnable() {
         // Plugin startup logic
         instance = this;
-        TextLibrary.setup(this);
         Permissions.registerSubDefaults();
         Permissions.setupManageStarNode();
         this.dataFile = new DataFile("event-data.yml");
@@ -196,6 +195,7 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         EVENT_TP("event-tp"),
         REPLACED_("replaced"),
         ENDED("ended"),
+        STARTED_("started"),
         ;
 
         private final String node;
