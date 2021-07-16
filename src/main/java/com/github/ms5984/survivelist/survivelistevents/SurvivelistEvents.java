@@ -65,7 +65,9 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         Permissions.setupManageStarNode();
         this.dataFile = new DataFile("event-data.yml");
         this.eventLocation = dataFile.getValueNow(fc -> fc.getLocation("location"));
-        this.event = new SurvivelistServerEvent(this);
+        if (dataFile.getValue(fc -> fc.getString("status")).thenApply("active"::equals).join()) {
+            this.event = new SurvivelistServerEvent(this);
+        }
         this.eventCmd = instance.getCommand("event");
         this.eventTpCmd = instance.getCommand("eventtp");
         final EventCommand eventCommand = new EventCommand(this);
@@ -86,6 +88,7 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     public @NotNull ServerEvent startEvent() throws EventAlreadyRunningException {
         if (event != null) throw new EventAlreadyRunningException(event, Messages.EVENT_RUNNING.toString());
         this.event = new SurvivelistServerEvent(this);
+        dataFile.update(fc -> fc.set("status", "active")).whenComplete((v, e) -> dataFile.save());
         return event;
     }
 
@@ -94,6 +97,7 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         if (event != null) {
             event.endEvent(this);
             event = null;
+            dataFile.update(fc -> fc.set("status", null)).whenComplete((v, e) -> dataFile.save());
             return true;
         }
         return false;
