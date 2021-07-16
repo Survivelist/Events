@@ -26,11 +26,9 @@ package com.github.ms5984.survivelist.survivelistevents.api;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.NotPresentPlayerException;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -38,6 +36,24 @@ import java.util.function.Predicate;
  * Interface of the current server event.
  */
 public interface ServerEvent {
+    /**
+     * Ends the event.
+     * <p>
+     * <b>Must</b> be called with the same EventService returned
+     * by {@link #getEventService()}.
+     * <p>
+     * This method should complete all of the following:
+     * <ul>
+     *     <li>Send all players back to their original locations.</li>
+     *     <li>Clear any saved user data (locations, etc).</li>
+     * </ul>
+     * <p>
+     * Generally, called by an {@link EventService}.
+     * @param eventService the event service of this event
+     * @throws IllegalArgumentException if event service does not match
+     */
+    void endEvent(EventService eventService) throws IllegalArgumentException;
+
     /**
      * Add a player to the event.
      *
@@ -81,25 +97,18 @@ public interface ServerEvent {
     @NotNull Set<EventPlayer> getPlayers();
 
     /**
-     * Get the location of the event if it has been set.
-     *
-     * @return the location of the event if set
-     */
-    @NotNull Optional<Location> getEventLocation();
-
-    /**
-     * Set the location of the event.
-     *
-     * @param location location of the event
-     */
-    void setEventLocation(Location location);
-
-    /**
      * Teleport all players to the start.
      * <p>
-     * Does nothing if {@link #getEventLocation()} is not present
+     * Does nothing if {@link EventService#getEventLocation()} is not present
      */
     default void teleportAllPlayers() {
         getPlayers().forEach(EventPlayer::teleportToEvent);
     }
+
+    /**
+     * Get the event service managing this event.
+     *
+     * @return the event service for this event
+     */
+    @NotNull EventService getEventService();
 }

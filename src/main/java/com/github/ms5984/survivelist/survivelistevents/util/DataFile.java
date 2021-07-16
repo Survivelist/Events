@@ -24,6 +24,7 @@
 package com.github.ms5984.survivelist.survivelistevents.util;
 
 import com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -39,6 +40,7 @@ import java.util.function.Function;
 /**
  * Represents a Yaml-based data file.
  */
+@SuppressWarnings("UnusedReturnValue")
 public class DataFile {
     private final File file;
     private final YamlConfiguration configuration;
@@ -117,6 +119,24 @@ public class DataFile {
             } catch (IOException e) {
                 throw new IllegalStateException("Unable to save DataFile[" + file + "]", e);
             }
+        }, executorService);
+    }
+
+    /**
+     * Delete the data file (if it exists).
+     * <p>
+     * Additionally clears internal FileConfiguration.
+     *
+     * @return true if the file existed and was deleted
+     */
+    public CompletableFuture<Boolean> delete() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                configuration.loadFromString("");
+            } catch (InvalidConfigurationException e) {
+                throw new IllegalStateException(e);
+            }
+            return file.delete();
         }, executorService);
     }
 

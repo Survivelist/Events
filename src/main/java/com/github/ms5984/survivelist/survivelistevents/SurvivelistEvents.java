@@ -25,13 +25,16 @@ package com.github.ms5984.survivelist.survivelistevents;
 
 import com.github.ms5984.survivelist.survivelistevents.api.EventService;
 import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
+import com.github.ms5984.survivelist.survivelistevents.api.exceptions.EventAlreadyRunningException;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventCommand;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventTpCommand;
 import com.github.ms5984.survivelist.survivelistevents.model.PlayerDataService;
 import com.github.ms5984.survivelist.survivelistevents.model.SurvivelistServerEvent;
+import com.github.ms5984.survivelist.survivelistevents.util.DataFile;
 import com.github.ms5984.survivelist.survivelistevents.util.DataService;
 import com.github.ms5984.survivelist.survivelistevents.util.TextLibrary;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
@@ -49,6 +52,8 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     private static SurvivelistEvents instance;
     private SurvivelistServerEvent event;
     private final DataService dataService = new DataService();
+    private DataFile dataFile;
+    private Location eventLocation;
     private PluginCommand eventCmd;
     private PluginCommand eventTpCmd;
 
@@ -59,6 +64,8 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         TextLibrary.setup(this);
         Permissions.registerSubDefaults();
         Permissions.setupManageStarNode();
+        this.dataFile = new DataFile("event-data.yml");
+        this.eventLocation = dataFile.getValueNow(fc -> fc.getLocation("location"));
         this.event = new SurvivelistServerEvent(this);
         this.eventCmd = instance.getCommand("event");
         this.eventTpCmd = instance.getCommand("eventtp");
@@ -77,8 +84,35 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     }
 
     @Override
-    public @NotNull ServerEvent getEvent() {
-        return event;
+    public @NotNull ServerEvent startEvent() throws EventAlreadyRunningException {
+        if (event != null) throw new EventAlreadyRunningException(event, Messages.EVENT_RUNNING.toString());
+        return new SurvivelistServerEvent(this);
+    }
+
+    @Override
+    public boolean endEvent() {
+        if (event != null) {
+            event.endEvent(this);
+            event = null;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public @NotNull Optional<ServerEvent> getEvent() {
+        return Optional.ofNullable(event);
+    }
+
+    @Override
+    public @NotNull Optional<Location> getEventLocation() {
+        return Optional.ofNullable(eventLocation);
+    }
+
+    @Override
+    public void setEventLocation(Location location) {
+        eventLocation = (location == null) ? null : location.clone();
+        dataFile.update(fc -> fc.set("location", eventLocation)).whenComplete((n, e) -> dataFile.save());
     }
 
     public static DataService getDataService() {
@@ -154,6 +188,13 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         LEAVE_MESSAGE_SELF("leaving.self"),
         LEAVE_ANNOUNCE_("leaving.announce"),
         LEAVE_NOT_IN("leaving.not-in"),
+        LEAVE_FORCE_END("leaving.force-end"),
+        NO_EVENT("no-event"),
+        EVENT_RUNNING("event-running"),
+        FORCE_START("force-start"),
+        EVENT_TP("event-tp"),
+        REPLACED_("replaced"),
+        ENDED("ended"),
         ;
 
         private final String node;

@@ -60,7 +60,7 @@ public abstract class EventPlayer {
      * Teleport the player to the event location if set.
      */
     public void teleportToEvent() {
-        event.getEventLocation().ifPresent(player::teleportAsync);
+        event.getEventService().getEventLocation().ifPresent(player::teleportAsync);
     }
 
     /**

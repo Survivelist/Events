@@ -25,23 +25,22 @@ package com.github.ms5984.survivelist.survivelistevents.model;
 
 import com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents;
 import com.github.ms5984.survivelist.survivelistevents.api.EventPlayer;
+import com.github.ms5984.survivelist.survivelistevents.api.EventService;
 import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.NotPresentPlayerException;
-import com.github.ms5984.survivelist.survivelistevents.util.DataFile;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,26 +51,47 @@ import java.util.function.Predicate;
  */
 public class SurvivelistServerEvent implements ServerEvent {
     private final JavaPlugin javaPlugin;
+    private final EventService eventService;
     private final UUID uuid = UUID.randomUUID();
+    private final Listener listener;
     private final Map<UUID, EventPlayer> players = new ConcurrentHashMap<>();
-    private final DataFile dataFile = new DataFile("event-data.yml");
     private final PlayerDataService playerDataService = new PlayerDataService();
-    private Location eventLocation = dataFile.getValueNow(fc -> fc.getLocation("location"));
 
     public SurvivelistServerEvent(SurvivelistEvents survivelistEvents) {
         // Set plugin instance
         this.javaPlugin = survivelistEvents;
+        // Set event service
+        this.eventService = survivelistEvents;
         // Register Listener for player respawn event
-        Bukkit.getPluginManager().registerEvents(new Listener() {
+        this.listener = new Listener() {
             @EventHandler
             public void onPlayerRespawnEvent(PlayerRespawnEvent e) {
                 // Ignore players that haven't joined the event
                 if (!players.containsKey(e.getPlayer().getUniqueId())) {
                     return;
                 }
-                getEventLocation().ifPresent(e::setRespawnLocation);
+                eventService.getEventLocation().ifPresent(e::setRespawnLocation);
             }
-        }, javaPlugin);
+        };
+        Bukkit.getPluginManager().registerEvents(listener, javaPlugin);
+    }
+
+    @Override
+    public void endEvent(EventService eventService) throws IllegalArgumentException {
+        if (eventService != this.eventService) throw new IllegalArgumentException("EventService does not match");
+        // Send all players back
+        players.values().forEach(eventPlayer -> {
+            // teleport
+            eventPlayer.teleportBack();
+            // send message "event ended, returned to previous location"
+            eventPlayer.getPlayer().sendMessage(SurvivelistEvents.Messages.LEAVE_FORCE_END.toString());
+        });
+        // Cleanup players map
+        players.clear();
+        // Unregister listener (hopefully)
+        HandlerList.unregisterAll(listener);
+        // Clear the player data folder
+        PlayerDataService.clearCache(javaPlugin);
     }
 
     @Override
@@ -108,6 +128,8 @@ public class SurvivelistServerEvent implements ServerEvent {
             eventPlayer.teleportBack();
             // Remove from map
             players.remove(uid);
+            // Delete player data
+            playerDataService.clearData(player);
             return;
         }
         throw new NotPresentPlayerException(player, SurvivelistEvents.Messages.LEAVE_NOT_IN.toString());
@@ -128,14 +150,8 @@ public class SurvivelistServerEvent implements ServerEvent {
     }
 
     @Override
-    public @NotNull Optional<Location> getEventLocation() {
-        return Optional.ofNullable(eventLocation);
-    }
-
-    @Override
-    public void setEventLocation(Location location) {
-        eventLocation = (location == null) ? null : location.clone();
-        dataFile.update(fc -> fc.set("location", eventLocation)).whenComplete((n, e) -> dataFile.save());
+    public @NotNull EventService getEventService() {
+        return eventService;
     }
 
     @Override

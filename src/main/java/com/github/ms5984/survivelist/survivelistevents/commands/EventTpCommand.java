@@ -50,7 +50,15 @@ public class EventTpCommand implements TabExecutor {
         if (!command.testPermission(sender)) {
             return true;
         }
-        eventService.getEvent().teleportAllPlayers();
+        // Get event
+        eventService.getEvent().ifPresentOrElse(event -> {
+            // Teleport all players to the event
+            sender.sendMessage(SurvivelistEvents.Messages.EVENT_TP.toString());
+            event.teleportAllPlayers();
+        }, () -> {
+            // Message sender "no event running"
+            sender.sendMessage(SurvivelistEvents.Messages.NO_EVENT.toString());
+        });
         return true;
     }
 

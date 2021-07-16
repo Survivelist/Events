@@ -42,6 +42,15 @@ public class PlayerDataService {
     }
 
     /**
+     * Clear data for the provided player.
+     *
+     * @param player the player
+     */
+    void clearData(Player player) {
+        resolvePlayer(player).delete();
+    }
+
+    /**
      * Wipe the entire users data folder.
      * <p>
      * Always called onDisable.

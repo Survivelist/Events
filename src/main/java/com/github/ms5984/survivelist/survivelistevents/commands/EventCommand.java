@@ -25,11 +25,18 @@ package com.github.ms5984.survivelist.survivelistevents.commands;
 
 import com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents;
 import com.github.ms5984.survivelist.survivelistevents.api.EventService;
+import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
+import com.github.ms5984.survivelist.survivelistevents.api.exceptions.EventAlreadyRunningException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.NotPresentPlayerException;
+import com.github.ms5984.survivelist.survivelistevents.util.TextLibrary;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -51,6 +58,7 @@ public class EventCommand implements TabExecutor {
     private final EventService eventService;
     private final ImmutableMap<String, String> helpMenu;
     private final ImmutableList<String> tabCompletions;
+    private final TextComponent forceStartMessage;
 
     public EventCommand(SurvivelistEvents plugin) {
         this.eventService = plugin;
@@ -64,12 +72,19 @@ public class EventCommand implements TabExecutor {
         }
         this.helpMenu = buildHelpMenu.build();
         this.tabCompletions = buildTabCompletions.build();
+        this.forceStartMessage = Component.text(SurvivelistEvents.Messages.FORCE_START.toString())
+                .append(Component.space())
+                .append(
+                        Component.text("click here")
+                                .clickEvent(ClickEvent.runCommand("/event start force"))
+                                .color(NamedTextColor.DARK_GRAY)
+                );
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!command.testPermission(sender)) return true;
-        if (args.length != 1) {
+        if (args.length != 1 && !(args.length == 2 && args[0].equalsIgnoreCase("start") && args[1].equalsIgnoreCase("force"))) {
             // Show help menu
             sender.sendMessage("Commands:");
             for (Map.Entry<String, String> entry : helpMenu.entrySet()) {
@@ -86,55 +101,87 @@ public class EventCommand implements TabExecutor {
             return true;
         }
         // Process subcommands
-        // check for player
-        if (!(sender instanceof Player)) {
-            // not player, send error
-            sender.sendMessage(SurvivelistEvents.Messages.MUST_BE_PLAYER.toString());
-            return true;
-        }
-        // is player; cast and store
-        final Player player = (Player) sender;
+        final Optional<Player> playerOptional = Optional.of(sender).filter(Player.class::isInstance).map(Player.class::cast);
+        final Optional<ServerEvent> eventOptional = eventService.getEvent();
         if (args[0].equalsIgnoreCase("join")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_JOIN.getNode()).map(sender::hasPermission).orElse(false)) {
                 sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
                 return true;
             }
+            // check for player
+            if (playerOptional.isEmpty()) {
+                // not player, send error
+                sender.sendMessage(SurvivelistEvents.Messages.MUST_BE_PLAYER.toString());
+                return true;
+            }
+            // store if present
+            final Player player = (Player) sender;
+            // If no event is running then message and exit
+            if (eventOptional.isEmpty()) {
+                sender.sendMessage(SurvivelistEvents.Messages.NO_EVENT.toString());
+                return true;
+            }
+            // Get current event
+            final ServerEvent serverEvent = eventOptional.get();
             // Join event
             try {
-                eventService.getEvent().addPlayer(player).teleportToEvent();
+                serverEvent.addPlayer(player).teleportToEvent();
             } catch (AlreadyPresentPlayerException | InventoryNotClearPlayerException e) {
                 // Send message "you are already in the event" or "please empty your inventory"
                 sender.sendMessage(e.getMessage());
                 return true;
             }
             player.sendMessage(SurvivelistEvents.Messages.JOIN_MESSAGE_SELF.toString());
-            eventService.getEvent().sendMessage(SurvivelistEvents.Messages.JOIN_ANNOUNCE_.replace(player.getName()), p -> p != player);
+            serverEvent.sendMessage(SurvivelistEvents.Messages.JOIN_ANNOUNCE_.replace(player.getName()), p -> p != player);
         } else if (args[0].equalsIgnoreCase("leave")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_LEAVE.getNode()).map(sender::hasPermission).orElse(false)) {
                 sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
                 return true;
             }
+            // check for player
+            if (playerOptional.isEmpty()) {
+                // not player, send error
+                sender.sendMessage(SurvivelistEvents.Messages.MUST_BE_PLAYER.toString());
+                return true;
+            }
+            // store if present
+            final Player player = (Player) sender;
+            // If no event is running then message and exit
+            if (eventOptional.isEmpty()) {
+                sender.sendMessage(SurvivelistEvents.Messages.NO_EVENT.toString());
+                return true;
+            }
+            // Get current event
+            final ServerEvent serverEvent = eventOptional.get();
             // Leave event
             try {
-                eventService.getEvent().removePlayer(player);
+                serverEvent.removePlayer(player);
             } catch (NotPresentPlayerException e) {
                 // Send message "you are not in the event"
                 sender.sendMessage(e.getMessage());
                 return true;
             }
             player.sendMessage(SurvivelistEvents.Messages.LEAVE_MESSAGE_SELF.toString());
-            eventService.getEvent().sendMessage(SurvivelistEvents.Messages.LEAVE_ANNOUNCE_.replace(player.getName()), p -> p != player);
+            serverEvent.sendMessage(SurvivelistEvents.Messages.LEAVE_ANNOUNCE_.replace(player.getName()), p -> p != player);
         } else if (args[0].equalsIgnoreCase("sethere")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
                 sender.sendMessage(SurvivelistEvents.Messages.NO_PERMISSION.toString());
                 return true;
             }
+            // check for player
+            if (playerOptional.isEmpty()) {
+                // not player, send error
+                sender.sendMessage(SurvivelistEvents.Messages.MUST_BE_PLAYER.toString());
+                return true;
+            }
+            // store if present
+            final Player player = (Player) sender;
             // Set event location
             final Location location = player.getLocation();
-            eventService.getEvent().setEventLocation(location);
+            eventService.setEventLocation(location);
             player.sendMessage(SurvivelistEvents.Messages.LOCATION_SET_.replace(location));
         } else if (args[0].equalsIgnoreCase("start")) {
             // Test permission
@@ -143,6 +190,31 @@ public class EventCommand implements TabExecutor {
                 return true;
             }
             // Start event
+            try {
+                eventService.startEvent();
+            } catch (EventAlreadyRunningException e) {
+                // Send message "An event is in progress!"
+                sender.sendMessage(TextLibrary.translate("&c&o" + e.getMessage()));
+                if (args.length == 2 && args[1].equalsIgnoreCase("force")) {
+                    // Forcibly end previous event
+                    if (!eventService.endEvent()) {
+                        throw new IllegalStateException("Unable to end old event!");
+                    }
+                    final ServerEvent serverEvent;
+                    try {
+                        // Start new event
+                        serverEvent = eventService.startEvent();
+                    } catch (EventAlreadyRunningException eventAlreadyRunningException) {
+                        throw new IllegalStateException("Unable to replace old event.", eventAlreadyRunningException);
+                    }
+                    // on success send successful replacement message
+                    sender.sendMessage(SurvivelistEvents.Messages.REPLACED_.replace(serverEvent));
+                } else {
+                    // Send message about force param
+                    playerOptional.ifPresentOrElse(p -> p.sendMessage(forceStartMessage),
+                            () -> sender.sendMessage(SurvivelistEvents.Messages.FORCE_START.toString()));
+                }
+            }
         } else if (args[0].equalsIgnoreCase("end")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_END.getNode()).map(sender::hasPermission).orElse(false)) {
@@ -150,23 +222,36 @@ public class EventCommand implements TabExecutor {
                 return true;
             }
             // End event
+            if (eventService.endEvent()) {
+                // ended event successfully
+                sender.sendMessage(SurvivelistEvents.Messages.ENDED.toString());
+            } else {
+                // no event
+                sender.sendMessage(SurvivelistEvents.Messages.NO_EVENT.toString());
+            }
         }
         return true;
     }
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        final ArrayList<String> completions = new ArrayList<>(tabCompletions);
-        if (args.length == 1 && command.testPermissionSilent(sender)) {
-            if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
-                completions.remove("sethere");
-            }
-            for (String tabCompletion : tabCompletions) {
-                if (!tabCompletion.startsWith(args[0])) {
-                    completions.remove(tabCompletion);
+        if (command.testPermissionSilent(sender)) {
+            if (args.length == 1) {
+                final ArrayList<String> completions = new ArrayList<>(tabCompletions);
+                if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
+                    completions.remove("sethere");
+                }
+                for (String tabCompletion : tabCompletions) {
+                    if (!tabCompletion.startsWith(args[0])) {
+                        completions.remove(tabCompletion);
+                    }
+                }
+                return completions;
+            } else if (args.length == 2 && args[0].equalsIgnoreCase("start")) {
+                if ("start".startsWith(args[1])) {
+                    return ImmutableList.of("force");
                 }
             }
-            return completions;
         }
         return ImmutableList.of();
     }

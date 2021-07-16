@@ -21,51 +21,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.ms5984.survivelist.survivelistevents.api;
+package com.github.ms5984.survivelist.survivelistevents.api.exceptions;
 
-import com.github.ms5984.survivelist.survivelistevents.api.exceptions.EventAlreadyRunningException;
-import org.bukkit.Location;
+import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
 /**
- * Service which provides ServerEvent information.
+ * Thrown when requesting event start when one is already in progress.
  */
-public interface EventService {
-    /**
-     * Start the event.
-     *
-     * @return new event instance
-     * @throws EventAlreadyRunningException if there is an existing event instance
-     */
-    @NotNull ServerEvent startEvent() throws EventAlreadyRunningException;
+public final class EventAlreadyRunningException extends Exception {
+    private static final long serialVersionUID = 5121764038983204576L;
+    private final ServerEvent serverEvent;
+
+    public EventAlreadyRunningException(@NotNull ServerEvent serverEvent, String message) {
+        super(message);
+        this.serverEvent = serverEvent;
+    }
 
     /**
-     * Ends currently running event.
+     * Get the ServerEvent associated with this exception.
      *
-     * @return true if event was ended; false otherwise
+     * @return the associated ServerEvent
      */
-    boolean endEvent();
-
-    /**
-     * Get the current server event if one is running.
-     *
-     * @return an Optional describing the current server event
-     */
-    @NotNull Optional<ServerEvent> getEvent();
-
-    /**
-     * Get the location of the event if it has been set.
-     *
-     * @return the location of the event if set
-     */
-    @NotNull Optional<Location> getEventLocation();
-
-    /**
-     * Set the location of the event.
-     *
-     * @param location location of the event
-     */
-    void setEventLocation(Location location);
+    public @NotNull ServerEvent getServerEvent() {
+        return serverEvent;
+    }
 }

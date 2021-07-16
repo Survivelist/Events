@@ -29,3 +29,10 @@ messages:
     self: "&bLeaving the event. You have been returned to your previous location."
     announce: "&6&l{0} &6has left the event" # {0} = player name
     not-in: "&cYou are not in the event!"
+    force-end: "&aThe event ended. You have been returned to your previous location."
+  no-event: "&cThere is no event currently running."
+  event-running: "An event is in progress!"
+  force-start: "You can forcibly stop and start a new event using /event start force"
+  event-tp: "Teleporting all players..."
+  replaced: "Event replaced. New instance {0}" # {0} = toString of ServerEvent
+  ended: "Event ended."
