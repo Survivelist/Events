@@ -166,4 +166,9 @@ public class SurvivelistServerEvent implements ServerEvent {
     public int hashCode() {
         return uuid.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return uuid.toString();
+    }
 }

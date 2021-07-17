@@ -34,6 +34,6 @@ messages:
   event-running: "An event is in progress!"
   force-start: "You can forcibly stop and start a new event using /event start force"
   event-tp: "Teleporting all players..."
-  replaced: "Event replaced. New instance {0}" # {0} = toString of ServerEvent
+  replaced: "Event replaced. New instance: {0}" # {0} = toString of ServerEvent
   ended: "Event ended."
-  started: "Event started. New instance {0}" # {0) = toString of new ServerEvent
+  started: "Event started. New instance: {0}" # {0) = toString of new ServerEvent
