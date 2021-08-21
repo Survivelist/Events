@@ -103,7 +103,8 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         ConfigurationSerialization.registerClass(EventItem.class);
 //        saveResource("items/salmon.yml", false);
         loadItems();
-        loadModesFromConfig();
+        saveDefaultConfig();
+        this.eventMode = loadModesFromConfig();
         this.eventCmd = instance.getCommand("event");
         this.eventTpCmd = instance.getCommand("eventtp");
         final EventCommand eventCommand = new EventCommand(this);
@@ -201,6 +202,8 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         }
         //set change after ending
         this.eventMode = eventMode;
+        // Store set mode in datafile
+        dataFile.update(fc -> fc.set("last-mode", this.eventMode)).whenComplete((n, e) -> dataFile.save());
         return ended;
     }
 
@@ -209,11 +212,11 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         return ImmutableMap.copyOf(eventItems);
     }
 
-    private void loadModesFromConfig() {
+    private @NotNull String loadModesFromConfig() {
         final ConfigurationSection modesSection = getConfig().getConfigurationSection("modes");
         if (modesSection == null) throw new IllegalStateException("Unable to load valid modes!");
         for (String modeKey : modesSection.getKeys(false)) {
-            final ConfigurationSection mode = getConfig().getConfigurationSection("modes." + modeKey);
+            final ConfigurationSection mode = modesSection.getConfigurationSection(modeKey);
             if (mode == null) continue;
             final List<String> spawnTypes = mode.getStringList("spawn");
             if (spawnTypes.isEmpty()) {
@@ -256,13 +259,19 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
                 }
             });
         }
-        final String defaultMode = getConfig().getString("default-mode");
-        if (!modes.containsKey(defaultMode)) {
-            // select first as backup
-            this.eventMode = modes.keySet().stream().findFirst().orElseThrow(IllegalStateException::new);
-            return;
+        final String lastMode = dataFile.getValueNow(fc -> fc.getString("last-mode"));
+        if (lastMode != null) {
+            return lastMode;
         }
-        this.eventMode = defaultMode;
+        final String defaultMode = getConfig().getString("default-mode");
+        if (defaultMode == null || !modes.containsKey(defaultMode)) {
+            // select first as backup
+            for (String s : modes.keySet()) {
+                return s;
+            }
+            throw new IllegalStateException();
+        }
+        return defaultMode;
     }
 
     private void loadItems() {
@@ -381,10 +390,18 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         NO_PERMISSION("no-permission"),
         MUST_BE_PLAYER("player"),
         LOCATION_SET_("location-set"), // fields that end in _ generally call replacements
+        /**
+         * Replacements: 0 = team name, 1 = location string
+         */
+        TEAM_LOCATION_SET__("team-location-set"),
         PLEASE_EMPTY_INVENTORY("empty-inventory"),
         JOIN_MESSAGE_SELF("joining.self"),
         JOIN_ANNOUNCE_("joining.announce"),
         JOIN_ALREADY_IN("joining.already-in"),
+        /**
+         * Replacements: 0 = team name
+         */
+        JOIN_TEAM_("joining.team"),
         LEAVE_MESSAGE_SELF("leaving.self"),
         LEAVE_ANNOUNCE_("leaving.announce"),
         LEAVE_NOT_IN("leaving.not-in"),
@@ -396,6 +413,17 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         REPLACED_("replaced"),
         ENDED("ended"),
         STARTED_("started"),
+        NO_TEAMS("no-teams"),
+        /**
+         * Replacements: 0 = player name, 1 = team name
+         */
+        ASSIGNED__("assigned"),
+        MODE_INVALID("mode.invalid"),
+        MODE_CHANGE_STOP("mode.change-stop"),
+        /**
+         * Replacements: 0 = mode
+         */
+        MODE_SET_("mode.set"),
         ;
 
         private final String node;

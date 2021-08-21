@@ -36,11 +36,13 @@ messages:
   no-permission: "&cYou do not have permission to perform this command."
   player: "You must be a player to perform this action."
   location-set: "&#DDD605Updated event location: &b{0}" # {0} = location
+  team-location-set: "&#DDD605Updated team '{0}' location: &b{1}" # {0} = team name, {1} = location string
   empty-inventory: "&cPlease empty your inventory before joining the event."
   joining:
     self: "&7&oYou &7have joined the event"
     announce: "&6&l{0} &6has joined the event" # {0} = player name
     already-in: "&cYou are already in the event!"
+    team: "Teleporting to {0} spawn" # {0} = team name
   leaving:
     self: "&bLeaving the event. You have been returned to your previous location."
     announce: "&6&l{0} &6has left the event" # {0} = player name
@@ -53,3 +55,9 @@ messages:
   replaced: "Event replaced. New instance: {0}" # {0} = toString of ServerEvent
   ended: "Event ended."
   started: "Event started. New instance: {0}" # {0) = toString of new ServerEvent
+  no-teams: "&cYou need to configure team locations first!"
+  assigned: "Assigned {0} to {1}" # {0} = player name, {1} = team name
+  mode:
+    invalid: "&cThat is not a valid mode"
+    change-stop: "&aMode changed. Current event stopped."
+    set: "Mode set to &b{0}" # {0} = mode

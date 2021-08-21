@@ -26,6 +26,7 @@ package com.github.ms5984.survivelist.survivelistevents.model;
 import com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents;
 import com.github.ms5984.survivelist.survivelistevents.api.EventPlayer;
 import com.github.ms5984.survivelist.survivelistevents.api.EventService;
+import com.github.ms5984.survivelist.survivelistevents.api.Mode;
 import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
@@ -37,12 +38,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
@@ -88,6 +88,20 @@ public class SurvivelistServerEvent implements ServerEvent {
             // send message "event ended, returned to previous location"
             eventPlayer.getPlayer().sendMessage(SurvivelistEvents.Messages.LEAVE_FORCE_END.toString());
         });
+        // Take items, if needed
+        final Mode mode = eventService.getAllModes().get(eventService.getEventMode());
+        if (mode != null) {
+            final Set<String> itemsToGivePlayers = mode.itemsToGivePlayers();
+            final ArrayList<ItemStack> itemStacks = new ArrayList<>();
+            for (String item : itemsToGivePlayers) {
+                itemStacks.add(eventService.getEventItems().get(item).getItemCopy());
+            }
+            players.values().forEach(eventPlayer -> {
+                for (ItemStack item : itemStacks) {
+                    eventPlayer.getPlayer().getInventory().remove(item);
+                }
+            });
+        }
         // Cleanup players map
         players.clear();
         // Unregister listener (hopefully)
@@ -128,6 +142,17 @@ public class SurvivelistServerEvent implements ServerEvent {
         if (eventPlayer != null) {
             // Teleport back to original location
             eventPlayer.teleportBack();
+            // Take items
+            Optional.ofNullable(eventService.getAllModes().get(eventService.getEventMode()))
+                    .map(Mode::itemsToGivePlayers)
+                    .ifPresent(itemNames -> {
+                        final Map<String, EventItem> eventItems = eventService.getEventItems();
+                        for (String itemName : itemNames) {
+                            Optional.ofNullable(eventItems.get(itemName))
+                                    .map(EventItem::getItemCopy)
+                                    .ifPresent(eventPlayer.getPlayer().getInventory()::remove);
+                        }
+                    });
             // Remove from map
             players.remove(uid);
             // Delete player data
