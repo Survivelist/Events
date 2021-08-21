@@ -36,6 +36,8 @@ import java.util.List;
 
 /**
  * Handles /eventtp command.
+ *
+ * @since 1.0.0
  */
 public class EventTpCommand implements TabExecutor {
     private final EventService eventService;

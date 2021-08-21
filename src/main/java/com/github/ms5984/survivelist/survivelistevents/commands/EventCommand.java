@@ -53,6 +53,8 @@ import java.util.Optional;
 
 /**
  * Handles /event command and its subcommands.
+ *
+ * @since 1.0.0
  */
 public class EventCommand implements TabExecutor {
     private final EventService eventService;

@@ -31,6 +31,8 @@ import java.util.Optional;
 
 /**
  * Service which provides ServerEvent information.
+ *
+ * @since 1.0.0
  */
 public interface EventService {
     /**

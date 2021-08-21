@@ -27,6 +27,8 @@ import org.bukkit.entity.Player;
 
 /**
  * Thrown when a given player is not in the ServerEvent.
+ *
+ * @since 1.0.0
  */
 public final class NotPresentPlayerException extends Exception {
     private static final long serialVersionUID = -2779329443748792179L;

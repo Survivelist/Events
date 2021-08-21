@@ -28,6 +28,8 @@ import org.bukkit.entity.Player;
 
 /**
  * Thrown when a player is already present in a ServerEvent.
+ *
+ * @since 1.0.0
  */
 public final class AlreadyPresentPlayerException extends Exception {
     private static final long serialVersionUID = -1534586489099926889L;

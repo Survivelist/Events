@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player in an event.
+ *
+ * @since 1.0.0
  */
 public abstract class EventPlayer {
     protected final ServerEvent event;

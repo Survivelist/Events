@@ -48,6 +48,8 @@ import java.util.function.Predicate;
 
 /**
  * Plugin implementation of ServerEvent.
+ *
+ * @since 1.0.0
  */
 public class SurvivelistServerEvent implements ServerEvent {
     private final JavaPlugin javaPlugin;

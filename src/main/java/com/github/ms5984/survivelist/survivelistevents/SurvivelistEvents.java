@@ -47,6 +47,8 @@ import java.util.function.Supplier;
 
 /**
  * SurvivelistEvents plugin implementation.
+ *
+ * @since 1.0.0
  */
 public final class SurvivelistEvents extends JavaPlugin implements EventService {
     private static SurvivelistEvents instance;
