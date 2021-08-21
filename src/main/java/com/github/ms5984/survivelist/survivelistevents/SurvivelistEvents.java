@@ -49,6 +49,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -250,7 +251,7 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
                 }
 
                 @Override
-                public Set<String> itemsToGivePlayers() {
+                public @NotNull Set<String> itemsToGivePlayers() {
                     return items;
                 }
             });
@@ -276,10 +277,13 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
             final ConfigurationSection mode = getConfig().getConfigurationSection("modes." + key);
             if (mode == null) continue;
             for (String item : mode.getStringList("items")) {
-                try {
-                    saveResource("items/" + item + ".yml", false);
-                } catch (IllegalArgumentException ignored) {
-                    continue;
+                final File file = new File(getDataFolder(), "items/" + item + ".yml");
+                if (!file.exists()) {
+                    try {
+                        saveResource("items/" + item + ".yml", false);
+                    } catch (IllegalArgumentException ignored) {
+                        continue;
+                    }
                 }
                 final DataFile dataFile = new DataFile("items", item);
                 final ImmutableMap<String, EventItem> valueNow = dataFile.getValueNow(fc -> {

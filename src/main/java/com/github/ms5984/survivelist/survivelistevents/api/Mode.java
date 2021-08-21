@@ -24,6 +24,7 @@
 package com.github.ms5984.survivelist.survivelistevents.api;
 
 import com.google.common.collect.ImmutableSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -52,7 +53,7 @@ public interface Mode {
      *
      * @return key set of items to give to players
      */
-    default Set<String> itemsToGivePlayers() {
+    default @NotNull Set<String> itemsToGivePlayers() {
         return ImmutableSet.of();
     }
 }
