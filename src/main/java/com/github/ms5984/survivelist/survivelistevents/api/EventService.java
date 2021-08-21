@@ -90,13 +90,16 @@ public interface EventService {
 
     /**
      * Set the team locations of the event.
+     * <p>
+     * Team names cannot contain periods.
      *
      * @param team name of the team
      * @param teamLocation a valid location or null to clear
+     * @throws IllegalArgumentException if team is not a valid team name
      * @implSpec All implementations should clone valid passed Locations.
      * @since 1.1.0
      */
-    void setTeamLocation(@NotNull String team, @Nullable Location teamLocation);
+    void setTeamLocation(@NotNull String team, @Nullable Location teamLocation) throws IllegalArgumentException;
 
     /**
      * Get the set of team names whose locations have been set.

@@ -164,7 +164,8 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     }
 
     @Override
-    public void setTeamLocation(@NotNull String team, @Nullable Location teamLocation) {
+    public void setTeamLocation(@NotNull String team, @Nullable Location teamLocation) throws IllegalArgumentException {
+        if (team.contains(".")) throw new IllegalArgumentException("Team names cannot contain periods!");
         if (teamLocation == null) {
             synchronized (teamLocations) {
                 teamLocations.remove(team);
