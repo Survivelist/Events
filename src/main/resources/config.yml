@@ -18,7 +18,7 @@ subcommand-info:
       permission: events.manage.end
     setteam:
       description: "Set a team's spawn place using /event setteam <name>"
-      permission: events.manage.setmode
+      permission: events.manage.setteam
     setmode:
       description: "Set the next event mode. Ends current event"
       permission: events.manage.setmode
