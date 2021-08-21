@@ -66,6 +66,17 @@ public abstract class EventPlayer {
     }
 
     /**
+     * Teleport the player to a team location if set.
+     *
+     * @since 1.1.0
+     */
+    public void teleportToTeamLocation(@NotNull String team) {
+        event.getEventService().getTeamLocations()
+                .map(map -> map.get(team))
+                .ifPresent(player::teleportAsync);
+    }
+
+    /**
      * Teleport the player back to where they were
      * when they joined the event.
      */

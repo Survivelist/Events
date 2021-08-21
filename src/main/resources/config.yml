@@ -16,6 +16,22 @@ subcommand-info:
     end:
       description: "End the event"
       permission: events.manage.end
+    setteam:
+      description: "Set a team's spawn place using /event setteam <name>"
+      permission: events.manage.setmode
+    setmode:
+      description: "Set the next event mode. Ends current event"
+      permission: events.manage.setmode
+modes:
+  normal:
+    spawn: [location]
+  random:
+    spawn: [teams]
+  salmon:
+    spawn: [teams]
+    items:
+    - salmon
+default-mode: normal # matches line 26 key
 messages:
   no-permission: "&cYou do not have permission to perform this command."
   player: "You must be a player to perform this action."

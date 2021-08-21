@@ -28,21 +28,30 @@ import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.EventAlreadyRunningException;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventCommand;
 import com.github.ms5984.survivelist.survivelistevents.commands.EventTpCommand;
+import com.github.ms5984.survivelist.survivelistevents.model.EventItem;
+import com.github.ms5984.survivelist.survivelistevents.api.Mode;
 import com.github.ms5984.survivelist.survivelistevents.model.PlayerDataService;
 import com.github.ms5984.survivelist.survivelistevents.model.SurvivelistServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.util.DataFile;
 import com.github.ms5984.survivelist.survivelistevents.util.DataService;
 import com.github.ms5984.survivelist.survivelistevents.util.TextLibrary;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -51,13 +60,22 @@ import java.util.function.Supplier;
  * @since 1.0.0
  */
 public final class SurvivelistEvents extends JavaPlugin implements EventService {
+    public enum SpawnMode {
+        LOCATION,
+        TEAMS,
+        ;
+    }
     private static SurvivelistEvents instance;
     private SurvivelistServerEvent event;
     private final DataService dataService = new DataService();
     private DataFile dataFile;
     private Location eventLocation;
+    private final Map<String, Location> teamLocations = new ConcurrentHashMap<>(8);
+    private final Map<String, EventItem> eventItems = new ConcurrentHashMap<>();
+    private final Map<String, Mode> modes = new ConcurrentHashMap<>();
     private PluginCommand eventCmd;
     private PluginCommand eventTpCmd;
+    private String eventMode;
 
     @Override
     public void onEnable() {
@@ -66,10 +84,25 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         Permissions.registerSubDefaults();
         Permissions.setupManageStarNode();
         this.dataFile = new DataFile("event-data.yml");
+        // load single location
         this.eventLocation = dataFile.getValueNow(fc -> fc.getLocation("location"));
+        // load team locations
+        dataFile.getValueNow(fc -> Optional.ofNullable(fc.getConfigurationSection("teams")).map(section -> section.getKeys(false)))
+                .ifPresent(teams -> {
+                    for (String team : teams) {
+                        final Location teamLocation = dataFile.getValueNow(fc -> fc.getLocation("teams." + team));
+                        if (teamLocation == null) continue;
+                        teamLocations.put(team, teamLocation);
+                    }
+                });
         if (dataFile.getValue(fc -> fc.getString("status")).thenApply("active"::equals).join()) {
             this.event = new SurvivelistServerEvent(this);
         }
+        // load items
+        ConfigurationSerialization.registerClass(EventItem.class);
+//        saveResource("items/salmon.yml", false);
+        loadItems();
+        loadModesFromConfig();
         this.eventCmd = instance.getCommand("event");
         this.eventTpCmd = instance.getCommand("eventtp");
         final EventCommand eventCommand = new EventCommand(this);
@@ -121,6 +154,148 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         dataFile.update(fc -> fc.set("location", eventLocation)).whenComplete((n, e) -> dataFile.save());
     }
 
+    // new features
+
+    @Override
+    public @NotNull Optional<Map<String, Location>> getTeamLocations() {
+        return Optional.of(teamLocations)
+                .filter(Predicate.not(Map::isEmpty))
+                .map(ImmutableMap::copyOf);
+    }
+
+    @Override
+    public void setTeamLocation(@NotNull String team, @Nullable Location teamLocation) {
+        if (teamLocation == null) {
+            synchronized (teamLocations) {
+                teamLocations.remove(team);
+            }
+        } else {
+            final Location copy = teamLocation.clone();
+            synchronized (teamLocations) {
+                this.teamLocations.put(team, copy);
+            }
+        }
+        dataFile.update(fc -> fc.set("teams", teamLocations)).whenComplete((n, e) -> dataFile.save());
+    }
+
+    @Override
+    public @NotNull Map<String, Mode> getAllModes() {
+        return ImmutableMap.copyOf(modes);
+    }
+
+    @Override
+    public @NotNull String getEventMode() {
+        return eventMode;
+    }
+
+    @Override
+    public boolean setEventMode(String eventMode) throws IllegalArgumentException {
+        if (!modes.containsKey(eventMode)) throw new IllegalArgumentException("Invalid eventMode!");
+        final Mode newMode = modes.get(eventMode);
+        if (newMode == modes.get(this.eventMode)) return false;
+        boolean ended = false;
+        if (event != null) {
+            ended = endEvent();
+        }
+        //set change after ending
+        this.eventMode = eventMode;
+        return ended;
+    }
+
+    @Override
+    public @NotNull Map<String, EventItem> getEventItems() {
+        return ImmutableMap.copyOf(eventItems);
+    }
+
+    private void loadModesFromConfig() {
+        final ConfigurationSection modesSection = getConfig().getConfigurationSection("modes");
+        if (modesSection == null) throw new IllegalStateException("Unable to load valid modes!");
+        for (String modeKey : modesSection.getKeys(false)) {
+            final ConfigurationSection mode = getConfig().getConfigurationSection("modes." + modeKey);
+            if (mode == null) continue;
+            final List<String> spawnTypes = mode.getStringList("spawn");
+            if (spawnTypes.isEmpty()) {
+                getLogger().info("Skipping " + modeKey + " mode section: missing spawn parameters");
+                continue;
+            }
+            final ImmutableList.Builder<SpawnMode> builder = new ImmutableList.Builder<>();
+            for (String spawn : spawnTypes) {
+                final SpawnMode spawnMode;
+                try {
+                    spawnMode = SpawnMode.valueOf(spawn.toUpperCase(Locale.ROOT));
+                } catch (IllegalArgumentException ignored) {
+                    continue;
+                }
+                builder.add(spawnMode);
+            }
+            final ImmutableList<SpawnMode> spawnModes = builder.build();
+            if (spawnModes.isEmpty()) {
+                getLogger().warning("Skipped " + modeKey + " mode section: no valid spawn parameters");
+                continue;
+            }
+            final Set<String> items = ImmutableSet.copyOf(mode.getStringList("items"));
+            this.modes.put(modeKey, new Mode() {
+                final boolean usesLocation = spawnModes.contains(SpawnMode.LOCATION);
+                final boolean usesTeams = spawnModes.contains(SpawnMode.TEAMS);
+
+                @Override
+                public boolean usesEventLocation() {
+                    return usesLocation;
+                }
+
+                @Override
+                public boolean usesTeamLocations() {
+                    return usesTeams;
+                }
+
+                @Override
+                public Set<String> itemsToGivePlayers() {
+                    return items;
+                }
+            });
+        }
+        final String defaultMode = getConfig().getString("default-mode");
+        if (!modes.containsKey(defaultMode)) {
+            // select first as backup
+            this.eventMode = modes.keySet().stream().findFirst().orElseThrow(IllegalStateException::new);
+            return;
+        }
+        this.eventMode = defaultMode;
+    }
+
+    private void loadItems() {
+        final ConfigurationSection modesSection = getConfig().getConfigurationSection("modes");
+        if (modesSection == null) {
+            synchronized (eventItems) {
+                eventItems.clear();
+            }
+            return;
+        }
+        for (String key : modesSection.getKeys(false)) {
+            final ConfigurationSection mode = getConfig().getConfigurationSection("modes." + key);
+            if (mode == null) continue;
+            for (String item : mode.getStringList("items")) {
+                try {
+                    saveResource("items/" + item + ".yml", false);
+                } catch (IllegalArgumentException ignored) {
+                    continue;
+                }
+                final DataFile dataFile = new DataFile("items", item);
+                final ImmutableMap<String, EventItem> valueNow = dataFile.getValueNow(fc -> {
+                    final ImmutableMap.Builder<String, EventItem> builder = new ImmutableMap.Builder<>();
+                    for (String configKey : fc.getKeys(false)) {
+                        final EventItem eventItem = fc.getSerializable(configKey, EventItem.class);
+                        if (eventItem != null) builder.put(configKey, eventItem);
+                    }
+                    return builder.build();
+                });
+                synchronized (eventItems) {
+                    eventItems.putAll(valueNow);
+                }
+            }
+        }
+    }
+
     public static DataService getDataService() {
         return instance.dataService;
     }
@@ -133,6 +308,8 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         EVENT_SETHERE(() -> instance.getConfig().getString("subcommand-info.event.sethere.permission")),
         EVENT_START(() -> instance.getConfig().getString("subcommand-info.event.start.permission")),
         EVENT_END(() -> instance.getConfig().getString("subcommand-info.event.end.permission")),
+        EVENT_SETTEAM(() -> instance.getConfig().getString("subcommand-info.event.setteam.permission")),
+        EVENT_SETMODE(() -> instance.getConfig().getString("subcommand-info.event.setmode.permission")),
         ;
         private final Supplier<String> supplier;
 
@@ -175,6 +352,18 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
                 final Permission endPerm = new Permission(endNode);
                 endPerm.addParent(manageStar, true);
                 Bukkit.getPluginManager().addPermission(endPerm);
+            }
+            final String setTeamNode = EVENT_SETTEAM.getNode();
+            if (setTeamNode != null) {
+                final Permission setTeamPerm = new Permission(setTeamNode);
+                setTeamPerm.addParent(manageStar, true);
+                Bukkit.getPluginManager().addPermission(setTeamPerm);
+            }
+            final String setModeNode = EVENT_SETMODE.getNode();
+            if (setModeNode != null) {
+                final Permission setModePerm = new Permission(setModeNode);
+                setModePerm.addParent(manageStar, true);
+                Bukkit.getPluginManager().addPermission(setModePerm);
             }
         }
 
