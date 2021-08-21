@@ -253,7 +253,7 @@ public class EventCommand implements TabExecutor {
                 }
                 return completions;
             } else if (args.length == 2 && args[0].equalsIgnoreCase("start")) {
-                if ("start".startsWith(args[1])) {
+                if ("force".startsWith(args[1])) {
                     return ImmutableList.of("force");
                 }
             }
