@@ -1,0 +1,6 @@
+salmon:
+  ==: EventItem
+  type: SALMON # this is raw, cooked is COOKED_SALMON
+  name: "&b&lSlap Salmon"
+  enchantments:
+    knockback: 3
