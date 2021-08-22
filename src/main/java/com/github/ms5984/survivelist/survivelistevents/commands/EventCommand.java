@@ -311,6 +311,18 @@ public class EventCommand implements TabExecutor {
                 if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
                     completions.remove("sethere");
                 }
+                if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_START.getNode()).map(sender::hasPermission).orElse(false)) {
+                    completions.remove("start");
+                }
+                if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_END.getNode()).map(sender::hasPermission).orElse(false)) {
+                    completions.remove("end");
+                }
+                if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETTEAM.getNode()).map(sender::hasPermission).orElse(false)) {
+                    completions.remove("setteam");
+                }
+                if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETMODE.getNode()).map(sender::hasPermission).orElse(false)) {
+                    completions.remove("setmode");
+                }
                 for (String tabCompletion : tabCompletions) {
                     if (!tabCompletion.startsWith(args[0])) {
                         completions.remove(tabCompletion);
@@ -318,17 +330,17 @@ public class EventCommand implements TabExecutor {
                 }
                 return completions;
             } else if (args.length == 2) {
-                if (args[0].equalsIgnoreCase("start")) {
+                if (args[0].equalsIgnoreCase("start") && Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_START.getNode()).map(sender::hasPermission).orElse(false)) {
                     if ("force".startsWith(args[1])) {
                         return ImmutableList.of("force");
                     }
-                } else if (args[0].equalsIgnoreCase("setteam")) {
+                } else if (args[0].equalsIgnoreCase("setteam") && Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETTEAM.getNode()).map(sender::hasPermission).orElse(false)) {
                     final ArrayList<String> strings = eventService.getTeams().map(ArrayList::new).orElse(null);
                     if (strings != null) {
                         strings.removeIf(s -> !s.startsWith(args[1]));
                         return strings;
                     }
-                } else if (args[0].equalsIgnoreCase("setmode")) {
+                } else if (args[0].equalsIgnoreCase("setmode") && Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETMODE.getNode()).map(sender::hasPermission).orElse(false)) {
                     final ArrayList<String> strings = new ArrayList<>(eventService.getAllModes().keySet());
                     if (!strings.isEmpty()) {
                         strings.removeIf(s -> !s.startsWith(args[1]));
@@ -347,13 +359,13 @@ public class EventCommand implements TabExecutor {
             final String key = entry.getKey();
             if (key.equals("sethere") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETHERE.getNode()).map(sender::hasPermission).orElse(false)) {
                 continue;
-            } else if (entry.getKey().equals("start") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_START.getNode()).map(sender::hasPermission).orElse(false)) {
+            } else if (key.equals("start") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_START.getNode()).map(sender::hasPermission).orElse(false)) {
                 continue;
-            } else if (entry.getKey().equals("end") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_END.getNode()).map(sender::hasPermission).orElse(false)) {
+            } else if (key.equals("end") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_END.getNode()).map(sender::hasPermission).orElse(false)) {
                 continue;
-            } else if (entry.getKey().equals("setteam") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETTEAM.getNode()).map(sender::hasPermission).orElse(false)) {
+            } else if (key.equals("setteam") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETTEAM.getNode()).map(sender::hasPermission).orElse(false)) {
                 continue;
-            } else if (entry.getKey().equals("setmode") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETMODE.getNode()).map(sender::hasPermission).orElse(false)) {
+            } else if (key.equals("setmode") && !Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_SETMODE.getNode()).map(sender::hasPermission).orElse(false)) {
                 continue;
             }
             sender.sendMessage("/event " + key + " - " + entry.getValue());
