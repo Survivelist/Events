@@ -30,6 +30,8 @@ import java.util.regex.Pattern;
 
 /**
  * Process color coded text into proper formatted text.
+ *
+ * @since 1.0.0
  */
 public final class TextLibrary {
     private static final Pattern HEX_PATTERN = Pattern.compile("&(#(\\d|[A-F]|[a-f]){6})");

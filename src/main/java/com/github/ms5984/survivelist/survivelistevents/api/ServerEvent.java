@@ -34,6 +34,8 @@ import java.util.function.Predicate;
 
 /**
  * Interface of the current server event.
+ *
+ * @since 1.0.0
  */
 public interface ServerEvent {
     /**

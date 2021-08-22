@@ -30,6 +30,8 @@ import java.util.concurrent.Executors;
 
 /**
  * Service which manages single-thread executors for DataFiles.
+ *
+ * @since 1.0.0
  */
 public class DataService {
     private final Map<DataFile, ExecutorService> executors = new ConcurrentHashMap<>();

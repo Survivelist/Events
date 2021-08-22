@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player in an event.
+ *
+ * @since 1.0.0
  */
 public abstract class EventPlayer {
     protected final ServerEvent event;
@@ -61,6 +63,17 @@ public abstract class EventPlayer {
      */
     public void teleportToEvent() {
         event.getEventService().getEventLocation().ifPresent(player::teleportAsync);
+    }
+
+    /**
+     * Teleport the player to a team location if set.
+     *
+     * @since 1.1.0
+     */
+    public void teleportToTeamLocation(@NotNull String team) {
+        event.getEventService().getTeamLocations()
+                .map(map -> map.get(team))
+                .ifPresent(player::teleportAsync);
     }
 
     /**

@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manage player data which must persist across server connects.
+ *
+ * @since 1.0.0
  */
 public class PlayerDataService {
     private final Map<UUID, DataFile> resolvedData = new ConcurrentHashMap<>();

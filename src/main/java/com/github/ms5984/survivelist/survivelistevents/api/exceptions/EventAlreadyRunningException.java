@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Thrown when requesting event start when one is already in progress.
+ *
+ * @since 1.0.0
  */
 public final class EventAlreadyRunningException extends Exception {
     private static final long serialVersionUID = 5121764038983204576L;

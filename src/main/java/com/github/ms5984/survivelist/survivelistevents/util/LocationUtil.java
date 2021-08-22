@@ -21,42 +21,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.ms5984.survivelist.survivelistevents.api.exceptions;
+package com.github.ms5984.survivelist.survivelistevents.util;
 
-import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
-import org.bukkit.entity.Player;
+import org.bukkit.Location;
+import org.bukkit.World;
 
 /**
- * Thrown when a player is already present in a ServerEvent.
+ * A few utilities for working with Bukkit locations.
  *
- * @since 1.0.0
+ * @since 1.1.0
  */
-public final class AlreadyPresentPlayerException extends Exception {
-    private static final long serialVersionUID = -1534586489099926889L;
-    private final Player eventPlayer;
-    private final ServerEvent serverEvent;
-
-    public AlreadyPresentPlayerException(Player eventPlayer, ServerEvent serverEvent, String message) {
-        super(message);
-        this.eventPlayer = eventPlayer;
-        this.serverEvent = serverEvent;
+public class LocationUtil {
+    private LocationUtil() { // utility class only
+        throw new IllegalStateException();
     }
 
     /**
-     * Get the ServerEvent associated with this exception.
+     * Convert a Location to a string with similar
+     * formatting as the client's F3 debug menu.
      *
-     * @return the associated ServerEvent
+     * @param location a Bukkit Location
+     * @return formatted string
      */
-    public ServerEvent getServerEvent() {
-        return serverEvent;
-    }
-
-    /**
-     * Get the Player associated with this exception.
-     *
-     * @return the associated Player
-     */
-    public Player getPlayer() {
-        return eventPlayer;
+    public static String prettyPrintLocation(Location location) {
+        if (location == null) return "null";
+        final World world = location.getWorld();
+        if (world == null) {
+            return String.format("%.3f, %.5f, %.3f; yaw=%.1f/pitch=%.1f",
+                    location.getX(), location.getY(), location.getZ(),
+                    location.getYaw(), location.getPitch()
+            );
+        }
+        return String.format("%.3f, %.5f, %.3f; yaw=%.1f/pitch=%.1f in world=%s",
+                location.getX(), location.getY(), location.getZ(),
+                location.getYaw(), location.getPitch(),
+                world.getName()
+        );
     }
 }

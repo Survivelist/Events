@@ -21,42 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.github.ms5984.survivelist.survivelistevents.api.exceptions;
+package com.github.ms5984.survivelist.survivelistevents.api;
 
-import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
-import org.bukkit.entity.Player;
+import com.google.common.collect.ImmutableSet;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
- * Thrown when a player is already present in a ServerEvent.
+ * Describes an event mode.
  *
- * @since 1.0.0
+ * @since 1.1.0
  */
-public final class AlreadyPresentPlayerException extends Exception {
-    private static final long serialVersionUID = -1534586489099926889L;
-    private final Player eventPlayer;
-    private final ServerEvent serverEvent;
-
-    public AlreadyPresentPlayerException(Player eventPlayer, ServerEvent serverEvent, String message) {
-        super(message);
-        this.eventPlayer = eventPlayer;
-        this.serverEvent = serverEvent;
-    }
+public interface Mode {
+    /**
+     * Whether the mode uses a central event location.
+     *
+     * @return true if the mode uses the central event location
+     */
+    boolean usesEventLocation();
 
     /**
-     * Get the ServerEvent associated with this exception.
+     * Whether the mode uses team locations.
      *
-     * @return the associated ServerEvent
+     * @return true if the mode uses team locations
      */
-    public ServerEvent getServerEvent() {
-        return serverEvent;
-    }
+    boolean usesTeamLocations();
 
     /**
-     * Get the Player associated with this exception.
+     * Items (by key) to give to players.
      *
-     * @return the associated Player
+     * @return key set of items to give to players
      */
-    public Player getPlayer() {
-        return eventPlayer;
+    default @NotNull Set<String> itemsToGivePlayers() {
+        return ImmutableSet.of();
     }
 }

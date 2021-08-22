@@ -26,6 +26,7 @@ package com.github.ms5984.survivelist.survivelistevents.model;
 import com.github.ms5984.survivelist.survivelistevents.SurvivelistEvents;
 import com.github.ms5984.survivelist.survivelistevents.api.EventPlayer;
 import com.github.ms5984.survivelist.survivelistevents.api.EventService;
+import com.github.ms5984.survivelist.survivelistevents.api.Mode;
 import com.github.ms5984.survivelist.survivelistevents.api.ServerEvent;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.AlreadyPresentPlayerException;
 import com.github.ms5984.survivelist.survivelistevents.api.exceptions.InventoryNotClearPlayerException;
@@ -40,14 +41,14 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
  * Plugin implementation of ServerEvent.
+ *
+ * @since 1.0.0
  */
 public class SurvivelistServerEvent implements ServerEvent {
     private final JavaPlugin javaPlugin;
@@ -86,6 +87,14 @@ public class SurvivelistServerEvent implements ServerEvent {
             // send message "event ended, returned to previous location"
             eventPlayer.getPlayer().sendMessage(SurvivelistEvents.Messages.LEAVE_FORCE_END.toString());
         });
+        // Take items, if needed
+        final Mode mode = eventService.getAllModes().get(eventService.getEventMode());
+        if (mode != null) {
+            for (String item : mode.itemsToGivePlayers()) {
+                Optional.ofNullable(eventService.getEventItems().get(item))
+                        .ifPresent(eventItem -> players.values().forEach(eventPlayer -> eventItem.takeFromPlayer(eventPlayer.getPlayer())));
+            }
+        }
         // Cleanup players map
         players.clear();
         // Unregister listener (hopefully)
@@ -126,6 +135,16 @@ public class SurvivelistServerEvent implements ServerEvent {
         if (eventPlayer != null) {
             // Teleport back to original location
             eventPlayer.teleportBack();
+            // Take items
+            Optional.ofNullable(eventService.getAllModes().get(eventService.getEventMode()))
+                    .map(Mode::itemsToGivePlayers)
+                    .ifPresent(itemNames -> {
+                        final Map<String, EventItem> eventItems = eventService.getEventItems();
+                        for (String itemName : itemNames) {
+                            Optional.ofNullable(eventItems.get(itemName))
+                                    .ifPresent(eventItem -> eventItem.takeFromPlayer(eventPlayer.getPlayer()));
+                        }
+                    });
             // Remove from map
             players.remove(uid);
             // Delete player data

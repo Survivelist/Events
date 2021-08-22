@@ -39,6 +39,8 @@ import java.util.function.Function;
 
 /**
  * Represents a Yaml-based data file.
+ *
+ * @since 1.0.0
  */
 @SuppressWarnings("UnusedReturnValue")
 public class DataFile {

@@ -4,6 +4,8 @@ import org.bukkit.entity.Player;
 
 /**
  * Thrown when a player is trying to join a game with items in their inventory.
+ *
+ * @since 1.0.0
  */
 public final class InventoryNotClearPlayerException extends Exception {
     private static final long serialVersionUID = -2050790968074290813L;
