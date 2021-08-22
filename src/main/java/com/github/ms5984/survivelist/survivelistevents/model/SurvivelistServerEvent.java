@@ -38,7 +38,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,16 +90,10 @@ public class SurvivelistServerEvent implements ServerEvent {
         // Take items, if needed
         final Mode mode = eventService.getAllModes().get(eventService.getEventMode());
         if (mode != null) {
-            final Set<String> itemsToGivePlayers = mode.itemsToGivePlayers();
-            final ArrayList<ItemStack> itemStacks = new ArrayList<>();
-            for (String item : itemsToGivePlayers) {
-                itemStacks.add(eventService.getEventItems().get(item).getItemCopy());
+            for (String item : mode.itemsToGivePlayers()) {
+                Optional.ofNullable(eventService.getEventItems().get(item))
+                        .ifPresent(eventItem -> players.values().forEach(eventPlayer -> eventItem.takeFromPlayer(eventPlayer.getPlayer())));
             }
-            players.values().forEach(eventPlayer -> {
-                for (ItemStack item : itemStacks) {
-                    eventPlayer.getPlayer().getInventory().remove(item);
-                }
-            });
         }
         // Cleanup players map
         players.clear();
@@ -149,8 +142,7 @@ public class SurvivelistServerEvent implements ServerEvent {
                         final Map<String, EventItem> eventItems = eventService.getEventItems();
                         for (String itemName : itemNames) {
                             Optional.ofNullable(eventItems.get(itemName))
-                                    .map(EventItem::getItemCopy)
-                                    .ifPresent(eventPlayer.getPlayer().getInventory()::remove);
+                                    .ifPresent(eventItem -> eventItem.takeFromPlayer(eventPlayer.getPlayer()));
                         }
                     });
             // Remove from map

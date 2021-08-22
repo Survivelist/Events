@@ -47,7 +47,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,15 +142,11 @@ public class EventCommand implements TabExecutor {
             }
             // Give items, if needed
             if (!mode.itemsToGivePlayers().isEmpty()) {
-                final Set<String> itemsToGivePlayers = mode.itemsToGivePlayers();
                 final Map<String, EventItem> eventItems = eventService.getEventItems();
-                final List<ItemStack> resolvedItems = new ArrayList<>(itemsToGivePlayers.size());
-                for (String item : itemsToGivePlayers) {
-                    if (eventItems.containsKey(item)) {
-                        resolvedItems.add(eventItems.get(item).getItemCopy());
-                    }
+                for (String item : mode.itemsToGivePlayers()) {
+                    Optional.ofNullable(eventItems.get(item))
+                            .ifPresent(eventItem -> eventItem.giveToPlayer(player));
                 }
-                resolvedItems.forEach(item -> player.getInventory().addItem(item));
             }
             player.sendMessage(SurvivelistEvents.Messages.JOIN_MESSAGE_SELF.toString());
             serverEvent.sendMessage(SurvivelistEvents.Messages.JOIN_ANNOUNCE_.replace(player.getName()), p -> p != player);

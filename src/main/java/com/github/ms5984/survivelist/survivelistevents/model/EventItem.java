@@ -31,6 +31,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +98,52 @@ public class EventItem implements ConfigurationSerializable {
      */
     public ItemStack getItemCopy() {
         return new ItemStack(item);
+    }
+
+    /**
+     * Give this item to a player.
+     * <p>
+     * This method checks if they already have the item,
+     * and if so, returns false.
+     *
+     * @param player a player
+     * @return true only if we needed to give them the item
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean giveToPlayer(@NotNull Player player) {
+        if (playerHasExact(player)) {
+            return false;
+        }
+        player.getInventory().addItem(item);
+        return true;
+    }
+
+    /**
+     * Take this item from a player.
+     * <p>
+     * Delegates to {@link org.bukkit.inventory.Inventory#remove(ItemStack)},
+     * so every exact stack match is removed.
+     *
+     * @param player a player
+     * @return false if player did not have this item; true if remove attempted
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean takeFromPlayer(@NotNull Player player) {
+        if (!playerHasExact(player)) {
+            return false;
+        }
+        player.getInventory().remove(item);
+        return true;
+    }
+
+    /**
+     * Test if a player has this item.
+     *
+     * @param player a player
+     * @return true for an exact match of the item (includes amount)
+     */
+    public boolean playerHasExact(@NotNull Player player) {
+        return player.getInventory().contains(item);
     }
 
     /**

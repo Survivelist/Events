@@ -34,7 +34,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,16 +106,14 @@ public class EventTpCommand implements TabExecutor {
             }
             // Give items, if needed
             if (!mode.itemsToGivePlayers().isEmpty()) {
-                final Set<String> itemsToGivePlayers = mode.itemsToGivePlayers();
                 final Map<String, EventItem> eventItems = eventService.getEventItems();
-                final List<ItemStack> resolvedItems = new ArrayList<>(itemsToGivePlayers.size());
-                for (String item : itemsToGivePlayers) {
-                    if (eventItems.containsKey(item)) {
-                        resolvedItems.add(eventItems.get(item).getItemCopy());
-                    }
-                }
-                for (EventPlayer player : event.getPlayers()) {
-                    resolvedItems.forEach(item -> player.getPlayer().getInventory().addItem(item));
+                for (String item : mode.itemsToGivePlayers()) {
+                    Optional.ofNullable(eventItems.get(item))
+                            .ifPresent(eventItem -> {
+                                for (EventPlayer player : event.getPlayers()) {
+                                    eventItem.giveToPlayer(player.getPlayer());
+                                }
+                            });
                 }
             }
         }, () -> {
