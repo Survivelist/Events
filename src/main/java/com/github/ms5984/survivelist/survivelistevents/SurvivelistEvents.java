@@ -82,7 +82,9 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     public void onEnable() {
         // Plugin startup logic
         instance = this;
-        Permissions.registerSubDefaults();
+        // saveDefaultConfig as the very first task...
+        saveDefaultConfig();
+        Permissions.registerSubDefaults(); // as this calls getConfig internally
         Permissions.setupManageStarNode();
         this.dataFile = new DataFile("event-data.yml");
         // load single location
@@ -103,7 +105,6 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         ConfigurationSerialization.registerClass(EventItem.class);
 //        saveResource("items/salmon.yml", false);
         loadItems();
-        saveDefaultConfig();
         this.eventMode = loadModesFromConfig();
         this.eventCmd = instance.getCommand("event");
         this.eventTpCmd = instance.getCommand("eventtp");
