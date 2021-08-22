@@ -389,6 +389,9 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
     public enum Messages {
         NO_PERMISSION("no-permission"),
         MUST_BE_PLAYER("player"),
+        /**
+         * Replacements: 0 = location string
+         */
         LOCATION_SET_("location-set"), // fields that end in _ generally call replacements
         /**
          * Replacements: 0 = team name, 1 = location string
@@ -396,6 +399,9 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         TEAM_LOCATION_SET__("team-location-set"),
         PLEASE_EMPTY_INVENTORY("empty-inventory"),
         JOIN_MESSAGE_SELF("joining.self"),
+        /**
+         * Replacements: 0 = player name
+         */
         JOIN_ANNOUNCE_("joining.announce"),
         JOIN_ALREADY_IN("joining.already-in"),
         /**
@@ -403,6 +409,9 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
          */
         JOIN_TEAM_("joining.team"),
         LEAVE_MESSAGE_SELF("leaving.self"),
+        /**
+         * Replacements: 0 = player name
+         */
         LEAVE_ANNOUNCE_("leaving.announce"),
         LEAVE_NOT_IN("leaving.not-in"),
         LEAVE_FORCE_END("leaving.force-end"),
@@ -410,8 +419,14 @@ public final class SurvivelistEvents extends JavaPlugin implements EventService 
         EVENT_RUNNING("event-running"),
         FORCE_START("force-start"),
         EVENT_TP("event-tp"),
+        /**
+         * Replacements: 0 = toString of ServerEvent
+         */
         REPLACED_("replaced"),
         ENDED("ended"),
+        /**
+         * Replacements: 0 = toString of new ServerEvent
+         */
         STARTED_("started"),
         NO_TEAMS("no-teams"),
         /**

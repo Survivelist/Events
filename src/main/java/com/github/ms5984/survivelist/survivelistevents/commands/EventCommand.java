@@ -198,7 +198,7 @@ public class EventCommand implements TabExecutor {
             // Set event location
             final Location location = player.getLocation();
             eventService.setEventLocation(location);
-            player.sendMessage(SurvivelistEvents.Messages.LOCATION_SET_.replace(location));
+            player.sendMessage(SurvivelistEvents.Messages.LOCATION_SET_.replace(LocationUtil.prettyPrintLocation(location)));
         } else if (args[0].equalsIgnoreCase("start")) {
             // Test permission
             if (!Optional.ofNullable(SurvivelistEvents.Permissions.EVENT_START.getNode()).map(sender::hasPermission).orElse(false)) {
